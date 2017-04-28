@@ -2,8 +2,13 @@ from graphene import relay, ObjectType, AbstractType
 from graphene_django import DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
 import graphene
-from ingredients.models import Category, Ingredient
+from ingredients.models import Category, Ingredient, Chef
 
+
+class ChefType(DjangoObjectType):
+
+    class Meta:
+        model = Chef
 
 # Graphene will automatically map the Category model's fields onto the CategoryNode.
 # This is configured in the CategoryNode's Meta class (as you can see below)
@@ -78,6 +83,7 @@ class CreateIngredient(graphene.Mutation):
 class Query(AbstractType):
     all_categories = graphene.List(CategoryType)
     all_ingredients = graphene.List(IngredientType)
+    all_chefs = graphene.List(ChefType)
     hello = graphene.String(name=graphene.Argument(graphene.String, default_value="world"))
 
 
@@ -89,12 +95,15 @@ class Query(AbstractType):
                                 id=graphene.Int(),
                                 name=graphene.String())
 
+    def resolve_all_chefs(self, args, context, info):
+        return Chef.objects.all()
+
     def resolve_all_categories(self, args, context, info):
         return Category.objects.all()
 
     def resolve_all_ingredients(self, args, context, info):
         # We can easily optimize query count in the resolve method
-        return Ingredient.objects.select_related('category').all()
+        return Ingredient.objects.all()
 
 
     def resolve_hello(self, args, context, info):
